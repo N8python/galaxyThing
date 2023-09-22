@@ -76,48 +76,11 @@ async function main() {
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(clientWidth, clientHeight);
     document.body.appendChild(renderer.domElement);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.VSMShadowMap;
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 0, 0);
     const stats = new Stats();
     stats.showPanel(0);
     document.body.appendChild(stats.dom);
-    // Setup scene
-    // Skybox
-    const environment = new THREE.CubeTextureLoader().load([
-        "skybox/Box_Right.bmp",
-        "skybox/Box_Left.bmp",
-        "skybox/Box_Top.bmp",
-        "skybox/Box_Bottom.bmp",
-        "skybox/Box_Front.bmp",
-        "skybox/Box_Back.bmp"
-    ]);
-    environment.encoding = THREE.sRGBEncoding;
-    //scene.background = environment;
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(new THREE.Color(1.0, 1.0, 1.0), 0.25);
-    scene.add(ambientLight);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.35);
-    directionalLight.position.set(150, 200, 50);
-    // Shadows
-    directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 1024;
-    directionalLight.shadow.mapSize.height = 1024;
-    directionalLight.shadow.camera.left = -75;
-    directionalLight.shadow.camera.right = 75;
-    directionalLight.shadow.camera.top = 75;
-    directionalLight.shadow.camera.bottom = -75;
-    directionalLight.shadow.camera.near = 0.1;
-    directionalLight.shadow.camera.far = 500;
-    directionalLight.shadow.bias = -0.001;
-    directionalLight.shadow.blurSamples = 8;
-    directionalLight.shadow.radius = 4;
-    scene.add(directionalLight);
-    const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.15);
-    directionalLight2.color.setRGB(1.0, 1.0, 1.0);
-    directionalLight2.position.set(-50, 200, -150);
-    scene.add(directionalLight2);
     const defaultTexture = new THREE.WebGLRenderTarget(clientWidth, clientHeight, {
         minFilter: THREE.LinearFilter,
         magFilter: THREE.LinearFilter,
@@ -201,7 +164,7 @@ async function main() {
         const SIZE = 500;
         if (i < COUNT / 2) {
             particlePositions[i4 + 0] = (x / canvas.width - 0.5) * SIZE + Math.random() * 1 - 0.5;
-            particlePositions[i4 + 1] = Math.random() - 0.5; //Math.sign(Math.random() - 0.5) * (Math.random()) ** 2 * 10;
+            particlePositions[i4 + 1] = Math.random() - 0.5;
             particlePositions[i4 + 2] = (y / canvas.height - 0.5) * SIZE + Math.random() * 1 - 0.5;
             particlePositions[i4 + 3] = 2 + 10 * Math.random() ** 10;
             const r = MILKYWAY[y * canvas.width * 4 + x * 4 + 0];
@@ -214,7 +177,7 @@ async function main() {
             particleColors[i4 + 3] = a; //a;
         } else {
             particlePositions[i4 + 0] = (x / canvas.width - 0.5) * SIZE + Math.random() * 1 - 0.5;
-            particlePositions[i4 + 1] = Math.random() - 0.5; //Math.sign(Math.random() - 0.5) * (Math.random()) ** 2 * 10;
+            particlePositions[i4 + 1] = Math.random() - 0.5;
             particlePositions[i4 + 2] = (y / canvas.height - 0.5) * SIZE + Math.random() * 1 - 0.5;
             particlePositions[i4 + 3] = 0.05 + 0.05 * Math.random() + 0.6 * Math.random() ** 5;
             particleColors[i4 + 0] = 1;
@@ -348,6 +311,8 @@ async function main() {
         uniform vec2 attributeTextureSize;
         varying vec4 vColor;
         varying vec2 vUv;
+        varying vec3 vWorldPos;
+        varying float vScale;
         void main() {
             vec2 idTexel = vec2(mod(instanceId, attributeTextureSize.x), floor(float(instanceId) / attributeTextureSize.x));
             vec2 attrUv = (idTexel + vec2(0.5)) / attributeTextureSize;
@@ -362,12 +327,16 @@ async function main() {
             vec3 cameraUp = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
             worldPos += cameraRight * position.x * instanceScale;
             worldPos += cameraUp * position.y * instanceScale;
+            vWorldPos = worldPos;
+            vScale = instanceScale;
             gl_Position = projectionMatrix * viewMatrix * vec4(worldPos, 1.0);
         }
         `,
         fragmentShader: /* glsl */ `
         varying vec4 vColor;
         varying vec2 vUv;
+        varying vec3 vWorldPos;
+        varying float vScale;
         uniform sampler2D expTexture;
         uniform vec2 resolution;
         #include <dithering_pars_fragment>
@@ -375,6 +344,7 @@ async function main() {
             gl_FragColor = vColor;
             float alpha = texture2D(expTexture, vUv).r;
             gl_FragColor.a *= alpha;
+            gl_FragColor.a *= clamp(distance(vWorldPos, cameraPosition) / vScale, 0.0, 1.0);
             #include <dithering_fragment>
         }
         `,
