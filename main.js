@@ -85,6 +85,7 @@ async function main() {
         minFilter: THREE.LinearFilter,
         magFilter: THREE.LinearFilter,
         type: THREE.FloatType,
+
     });
     defaultTexture.depthTexture = new THREE.DepthTexture(clientWidth, clientHeight, THREE.FloatType);
     const loadImage = (url) => {
@@ -283,7 +284,7 @@ async function main() {
         varying vec2 vUv;
         void main() {
             float dist = dot(vUv - 0.5, vUv - 0.5);
-            float alpha = clamp(exp(-dist * 22.165), 0.0, 1.0);
+            float alpha = clamp(exp(-dist * 32.4), 0.0, 1.0);
             gl_FragColor = vec4(alpha, alpha, alpha, alpha);
         }
         `,
@@ -339,13 +340,11 @@ async function main() {
         varying float vScale;
         uniform sampler2D expTexture;
         uniform vec2 resolution;
-        #include <dithering_pars_fragment>
         void main() {
             gl_FragColor = vColor;
             float alpha = texture2D(expTexture, vUv).r;
             gl_FragColor.a *= alpha;
             gl_FragColor.a *= clamp(distance(vWorldPos, cameraPosition) / vScale, 0.0, 1.0);
-            #include <dithering_fragment>
         }
         `,
     });

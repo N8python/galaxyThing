@@ -24,9 +24,11 @@ const EffectShader = {
 		uniform highp sampler2D sceneDiffuse;
     uniform vec2 resolution;
     varying vec2 vUv;
+    #include <dithering_pars_fragment>
 		void main() {
       vec4 diffuse = texture2D(sceneDiffuse, vUv);
       gl_FragColor = vec4(diffuse.rgb, 1.0);
+      #include <dithering_fragment>
 		}`
 
 };
