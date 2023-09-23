@@ -167,11 +167,11 @@ async function main() {
             particlePositions[i4 + 0] = (x / canvas.width - 0.5) * SIZE + Math.random() * 1 - 0.5;
             particlePositions[i4 + 1] = Math.random() - 0.5;
             particlePositions[i4 + 2] = (y / canvas.height - 0.5) * SIZE + Math.random() * 1 - 0.5;
-            particlePositions[i4 + 3] = 2 + 10 * Math.random() ** 10;
             const r = MILKYWAY[y * canvas.width * 4 + x * 4 + 0];
             const g = MILKYWAY[y * canvas.width * 4 + x * 4 + 1];
             const b = MILKYWAY[y * canvas.width * 4 + x * 4 + 2];
             const a = Math.max(r, g, b) * 0.1;
+            particlePositions[i4 + 3] = 2 + 10 * Math.random() ** 10;
             particleColors[i4 + 0] = r;
             particleColors[i4 + 1] = g;
             particleColors[i4 + 2] = b;
@@ -180,11 +180,53 @@ async function main() {
             particlePositions[i4 + 0] = (x / canvas.width - 0.5) * SIZE + Math.random() * 1 - 0.5;
             particlePositions[i4 + 1] = Math.random() - 0.5;
             particlePositions[i4 + 2] = (y / canvas.height - 0.5) * SIZE + Math.random() * 1 - 0.5;
-            particlePositions[i4 + 3] = 0.05 + 0.05 * Math.random() + 0.6 * Math.random() ** 5;
-            particleColors[i4 + 0] = 1;
-            particleColors[i4 + 1] = 1;
-            particleColors[i4 + 2] = 1;
-            particleColors[i4 + 3] = 1;
+            particlePositions[i4 + 3] = 0.05 + 0.05 * Math.random() + 0.6 * Math.random() ** 10;
+            const size = particlePositions[i4 + 3];
+            // Color based off of size - max size is 0.7
+            if (size < 0.075) { // M-dwarf
+                particleColors[i4 + 0] = 1.5;
+                particleColors[i4 + 1] = 1;
+                particleColors[i4 + 2] = 1;
+                particleColors[i4 + 3] = 1;
+            } else if (size < 0.125) { // K-dwarf
+                particleColors[i4 + 0] = 2;
+                particleColors[i4 + 1] = 1.7;
+                particleColors[i4 + 2] = 1.1;
+                particleColors[i4 + 3] = 1;
+            } else if (size < 0.2) { // G-type
+                particleColors[i4 + 0] = 2.3;
+                particleColors[i4 + 1] = 1.7;
+                particleColors[i4 + 2] = 1.2;
+                particleColors[i4 + 3] = 1;
+            } else if (size < 0.35) { // F-type
+                particleColors[i4 + 0] = 2.5;
+                particleColors[i4 + 1] = 2.5;
+                particleColors[i4 + 2] = 2.0;
+                particleColors[i4 + 3] = 1;
+            } else if (size < 0.5) { // A-type
+                particleColors[i4 + 0] = 2.5;
+                particleColors[i4 + 1] = 2.5;
+                particleColors[i4 + 2] = 2.5;
+                particleColors[i4 + 3] = 1;
+            } else if (size < 0.625) { // B-type
+                particleColors[i4 + 0] = 2.5;
+                particleColors[i4 + 1] = 2.5;
+                particleColors[i4 + 2] = 3.0;
+                particleColors[i4 + 3] = 1;
+            } else { // O-Type
+                particleColors[i4 + 0] = 2.5;
+                particleColors[i4 + 1] = 2.5;
+                particleColors[i4 + 2] = 4.0;
+                particleColors[i4 + 3] = 1;
+            }
+            // Add variation to color
+            const variation = 0.5;
+            const varRand = Math.random();
+            particleColors[i4 + 0] *= 1 + variation * (varRand - 0.5);
+            particleColors[i4 + 1] *= 1 + variation * (varRand - 0.5);
+            particleColors[i4 + 2] *= 1 + variation * (varRand - 0.5);
+
+
         }
     }
 
@@ -385,7 +427,6 @@ async function main() {
     }
     let lastSortTime = performance.now();
     sortWorker.onmessage = () => {
-        console.log("Sort: " + (performance.now() - lastSortTime) + "ms");
         lastSortTime = performance.now();
         particleGeometry.attributes.instanceId.needsUpdate = true;
         sortParticles();
@@ -396,7 +437,6 @@ async function main() {
     function readParticlePositions() {
         renderer.setRenderTarget(positionRenderTarget);
         readPixelsAsync(gl, 0, 0, sqrtCount, sqrtCount, gl.RGBA, gl.FLOAT, particlePositions).then(() => {
-            console.log("Readback: " + (performance.now() - lastReadBackTime) + "ms");
             lastReadBackTime = performance.now();
             readParticlePositions();
         });
@@ -408,7 +448,6 @@ async function main() {
         const delta = clock.getDelta();
         renderer.setRenderTarget(positionRenderTarget2);
         renderer.clear();
-        console.log(delta / 0.016666)
         positionUpdateQuad.material.uniforms.delta.value = delta / 0.016666;
         positionUpdateQuad.render(renderer);
         renderer.setRenderTarget(positionRenderTarget);
