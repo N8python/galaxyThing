@@ -425,19 +425,15 @@ async function main() {
             COUNT
         });
     }
-    let lastSortTime = performance.now();
     sortWorker.onmessage = () => {
-        lastSortTime = performance.now();
         particleGeometry.attributes.instanceId.needsUpdate = true;
         sortParticles();
     }
     sortParticles();
-    let lastReadBackTime = performance.now();
 
     function readParticlePositions() {
         renderer.setRenderTarget(positionRenderTarget);
         readPixelsAsync(gl, 0, 0, sqrtCount, sqrtCount, gl.RGBA, gl.FLOAT, particlePositions).then(() => {
-            lastReadBackTime = performance.now();
             readParticlePositions();
         });
     }
